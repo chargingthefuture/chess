@@ -172,3 +172,56 @@ button.btn--primary {
 .dialog button {
   width: 100%;
 }
+
+/* Controls */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.control-row__label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.segmented {
+  display: inline-flex;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.segmented__btn {
+  background: transparent;
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.segmented__btn.is-active {
+  background: var(--accent);
+  color: #0b1a0b;
+}
+
+.segmented__btn:hover {
+  filter: none;
+  color: var(--text);
+}
+
+.segmented__btn.is-active:hover {
+  color: #0b1a0b;
+}

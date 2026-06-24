@@ -8,6 +8,7 @@ dev-dist
 .env.local
 *.log
 .vite
+*.tsbuildinfo
 
 # NOTE: public/engine/* (the Stockfish lite-single worker + wasm) IS committed on
 # purpose so the repo is self-contained and builds/plays offline without re-fetching
