@@ -370,3 +370,63 @@ button.btn--primary {
 .coach__feedback.tone-blunder {
   border-left-color: #ef4444;
 }
+
+/* Coach — Explain (network) */
+.coach__explain {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coach__explain-btn {
+  align-self: flex-start;
+}
+
+.coach__explanation {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  padding: 11px 13px;
+  border-radius: 8px;
+  background: var(--bg);
+  border-left: 4px solid var(--accent);
+}
+
+.coach__explain-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.coach__keyform {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.coach__keylabel {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.coach__keyrow {
+  display: flex;
+  gap: 8px;
+}
+
+.coach__keyinput {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-2);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.coach__keyinput:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

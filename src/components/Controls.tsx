@@ -42,13 +42,22 @@ export interface ControlsProps {
   onDifficultyChange: (d: Difficulty) => void
   coachOn: boolean
   onCoachToggle: (on: boolean) => void
+  explainOn: boolean
+  onExplainToggle: (on: boolean) => void
 }
 
 /**
- * Difficulty selector + the Coach toggle. (Increment 5 adds the Explain toggle here.)
- * Coach is never auto-enabled — it's an explicit user choice.
+ * Difficulty selector + the Coach and Explain toggles. Neither training feature is ever
+ * auto-enabled — connectivity never turns anything on; both are explicit user choices.
  */
-export function Controls({ difficulty, onDifficultyChange, coachOn, onCoachToggle }: ControlsProps) {
+export function Controls({
+  difficulty,
+  onDifficultyChange,
+  coachOn,
+  onCoachToggle,
+  explainOn,
+  onExplainToggle,
+}: ControlsProps) {
   return (
     <div className="controls">
       <div className="control-row">
@@ -73,6 +82,13 @@ export function Controls({ difficulty, onDifficultyChange, coachOn, onCoachToggl
         hint="Best move + eval, fully offline"
         checked={coachOn}
         onChange={onCoachToggle}
+      />
+
+      <Toggle
+        label="Explain"
+        hint="Written reasons via Claude — needs Coach + network"
+        checked={explainOn}
+        onChange={onExplainToggle}
       />
     </div>
   )

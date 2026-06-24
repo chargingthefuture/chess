@@ -60,6 +60,13 @@ export function parseAnalysis(fen: string, infoLines: string[]): CoachAnalysis {
   return { fen, lines, best: lines[0] ?? null, depth }
 }
 
+/** Format a line's eval from the side-to-move's perspective: "+0.74", "-1.20", or "#3". */
+export function formatEval(line: CoachLine): string {
+  if (line.mate !== null) return `#${line.mate}`
+  const pawns = (line.scoreCp / 100).toFixed(2)
+  return line.scoreCp > 0 ? `+${pawns}` : pawns
+}
+
 /** Convert a UCI move to SAN at a given position (for human-readable coaching text). */
 export function uciToSan(fen: string, uci: string): string {
   try {

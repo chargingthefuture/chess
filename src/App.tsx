@@ -11,8 +11,12 @@ import { Opponent } from './engine/opponent'
 import type { Difficulty } from './engine/opponent'
 import { Coach, computeSwing, sameMove, uciToSan } from './engine/coach'
 import type { CoachAnalysis, SwingResult } from './engine/coach'
+import { explain } from './coaching/explain'
+import { getCachedExplanation, setCachedExplanation } from './coaching/explainCache'
 
 const HINT_COLOR = '#2e9b3e'
+const API_KEY_LS = 'chesscoach:apiKey'
+const ENV_KEY = (import.meta.env as Record<string, string | undefined>).VITE_ANTHROPIC_API_KEY ?? ''
 
 /**
  * Increment 4: optional offline Coach layered on the Stockfish game. When enabled, a second
@@ -42,6 +46,34 @@ export default function App() {
   const [analyzing, setAnalyzing] = useState(false)
   const coachRef = useRef<Coach | null>(null)
   const hintRef = useRef<CoachAnalysis | null>(null) // synchronous mirror of `hint`
+
+  // --- Explain (optional, network) ---
+  const [explainOn, setExplainOn] = useState(false)
+  const [apiKey, setApiKey] = useState<string>(() => {
+    try {
+      return localStorage.getItem(API_KEY_LS) ?? ENV_KEY
+    } catch {
+      return ENV_KEY
+    }
+  })
+  const [explanation, setExplanation] = useState<string | null>(null)
+  const [explaining, setExplaining] = useState(false)
+  const [explainError, setExplainError] = useState<string | null>(null)
+
+  const saveApiKey = (key: string) => {
+    setApiKey(key)
+    try {
+      localStorage.setItem(API_KEY_LS, key)
+    } catch {
+      /* persistence unavailable — key still held in memory for this session */
+    }
+  }
+
+  // Any explanation belongs to a specific position; drop it whenever the position changes.
+  useEffect(() => {
+    setExplanation(null)
+    setExplainError(null)
+  }, [game.fen])
 
   // Create the coach worker lazily the first time it's enabled; keep it for reuse.
   useEffect(() => {
@@ -166,6 +198,47 @@ export default function App() {
     }
   }
 
+  const handleExplainToggle = (on: boolean) => {
+    setExplainOn(on)
+    if (!on) {
+      setExplanation(null)
+      setExplainError(null)
+      setExplaining(false)
+    }
+  }
+
+  // Explain only ever fires here — on an explicit user request, never automatically.
+  const handleExplain = async () => {
+    const analysis = hint ?? hintRef.current
+    if (!analysis?.best) return
+
+    // Cached positions are free and work offline.
+    const cached = getCachedExplanation(analysis.fen)
+    if (cached) {
+      setExplanation(cached)
+      setExplainError(null)
+      return
+    }
+    if (!apiKey) {
+      setExplainError('Add your Anthropic API key to use Explain.')
+      return
+    }
+
+    setExplaining(true)
+    setExplainError(null)
+    try {
+      const text = await explain(analysis, apiKey)
+      setCachedExplanation(analysis.fen, text)
+      setExplanation(text)
+    } catch {
+      // Silent fallback: the offline coach (best move + eval) stays; show a quiet note.
+      setExplanation(null)
+      setExplainError('Explanation unavailable — offline or API error. The offline coach still works.')
+    } finally {
+      setExplaining(false)
+    }
+  }
+
   const handleNewGame = () => {
     opponentRef.current?.newGame()
     coachRef.current?.newGame()
@@ -174,6 +247,9 @@ export default function App() {
     hintRef.current = null
     setSwing(null)
     setAnalyzing(false)
+    setExplanation(null)
+    setExplainError(null)
+    setExplaining(false)
     game.reset()
   }
 
@@ -211,6 +287,8 @@ export default function App() {
         onDifficultyChange={setDifficulty}
         coachOn={coachOn}
         onCoachToggle={handleCoachToggle}
+        explainOn={explainOn}
+        onExplainToggle={handleExplainToggle}
       />
 
       <Board
@@ -232,7 +310,19 @@ export default function App() {
         <button onClick={handleNewGame}>New game</button>
       </div>
 
-      <CoachPanel enabled={coachOn} analyzing={analyzing} hint={hint} swing={swing} />
+      <CoachPanel
+        enabled={coachOn}
+        analyzing={analyzing}
+        hint={hint}
+        swing={swing}
+        explainEnabled={explainOn}
+        hasApiKey={!!apiKey}
+        onSaveApiKey={saveApiKey}
+        onExplain={handleExplain}
+        explaining={explaining}
+        explanation={explanation}
+        explainError={explainError}
+      />
 
       <GameOverDialog status={game.status} onPlayAgain={handleNewGame} />
     </div>
