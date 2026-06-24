@@ -19,9 +19,12 @@ const API_KEY_LS = 'chesscoach:apiKey'
 const ENV_KEY = (import.meta.env as Record<string, string | undefined>).VITE_ANTHROPIC_API_KEY ?? ''
 
 /**
- * Increment 4: optional offline Coach layered on the Stockfish game. When enabled, a second
- * full-strength worker (MultiPV 3) highlights the best move and reports the eval swing of
- * each move you make. Entirely local — no network.
+ * Owns the three user-controlled settings (difficulty, Coach, Explain) and orchestrates the
+ * per-move flow: you (White) move -> chess.js validates -> opponent worker replies as Black.
+ * With Coach on, a separate full-strength worker (MultiPV 3) highlights the best move and
+ * scores your move's eval swing — fully offline. With Explain also on, an explicit request
+ * fetches written reasoning from Claude, falling back silently to the offline coach on any
+ * failure. Connectivity never auto-enables anything.
  */
 export default function App() {
   const game = useChessGame()
