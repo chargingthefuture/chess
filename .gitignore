@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+dev-dist
+*.local
+.DS_Store
+.env
+.env.local
+*.log
+.vite
+
+# NOTE: public/engine/* (the Stockfish lite-single worker + wasm) IS committed on
+# purpose so the repo is self-contained and builds/plays offline without re-fetching
+# the engine. scripts/copy-engine.mjs refreshes those files from node_modules when present.

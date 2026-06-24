@@ -1,0 +1,174 @@
+:root {
+  --bg: #111827;
+  --panel: #1f2937;
+  --panel-2: #374151;
+  --text: #f9fafb;
+  --muted: #9ca3af;
+  --accent: #769656;
+  --accent-2: #eeeed2;
+  --danger: #ef4444;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100dvh;
+  /* Respect the iPhone safe areas in standalone (home-screen) mode. */
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.app__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.app__subtitle {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.board-wrap {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  touch-action: none; /* let the board own drag gestures on touch */
+}
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-height: 44px;
+}
+
+.statusbar__turn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.turn-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.turn-dot--w {
+  background: #f8fafc;
+}
+.turn-dot--b {
+  background: #0b1220;
+}
+
+.statusbar__msg {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.statusbar__msg--check {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: var(--panel-2);
+  color: var(--text);
+  transition: filter 0.15s ease;
+}
+
+button:hover {
+  filter: brightness(1.12);
+}
+
+button:active {
+  filter: brightness(0.95);
+}
+
+button.btn--primary {
+  background: var(--accent);
+  color: #0b1a0b;
+  font-weight: 700;
+}
+
+/* Game-over overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+  backdrop-filter: blur(2px);
+}
+
+.dialog {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 26px 28px;
+  text-align: center;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.dialog h2 {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+}
+
+.dialog p {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.dialog button {
+  width: 100%;
+}
