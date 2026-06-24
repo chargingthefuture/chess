@@ -225,3 +225,148 @@ button.btn--primary {
 .segmented__btn.is-active:hover {
   color: #0b1a0b;
 }
+
+/* Toggle switch */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle__hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.toggle__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle__track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--bg);
+  transition: background 0.15s ease;
+}
+
+.toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.toggle__input:checked + .toggle__track {
+  background: var(--accent);
+}
+
+.toggle__input:checked + .toggle__track .toggle__thumb {
+  transform: translateX(18px);
+  background: #0b1a0b;
+}
+
+.toggle__input:focus-visible + .toggle__track {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
+/* Coach panel */
+.coach {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coach__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.coach__title {
+  font-weight: 700;
+}
+
+.coach__analyzing {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.coach__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.coach__key {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.coach__val {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.coach__eval {
+  margin-left: 6px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.coach__feedback {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--bg);
+  border-left: 4px solid var(--muted);
+}
+
+.coach__feedback strong {
+  font-weight: 700;
+}
+
+.coach__feedback.tone-good {
+  border-left-color: #4caf50;
+}
+.coach__feedback.tone-inaccuracy {
+  border-left-color: #eab308;
+}
+.coach__feedback.tone-mistake {
+  border-left-color: #f97316;
+}
+.coach__feedback.tone-blunder {
+  border-left-color: #ef4444;
+}

@@ -6,15 +6,49 @@ const LEVELS: { value: Difficulty; label: string }[] = [
   { value: 'hard', label: 'Hard' },
 ]
 
+interface ToggleProps {
+  label: string
+  hint?: string
+  checked: boolean
+  disabled?: boolean
+  onChange: (checked: boolean) => void
+}
+
+/** A labelled on/off switch (used for Coach and, later, Explain). */
+function Toggle({ label, hint, checked, disabled, onChange }: ToggleProps) {
+  return (
+    <label className={`toggle ${disabled ? 'is-disabled' : ''}`}>
+      <span className="toggle__text">
+        <span className="control-row__label">{label}</span>
+        {hint && <span className="toggle__hint">{hint}</span>}
+      </span>
+      <input
+        type="checkbox"
+        className="toggle__input"
+        role="switch"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="toggle__track" aria-hidden="true">
+        <span className="toggle__thumb" />
+      </span>
+    </label>
+  )
+}
+
 export interface ControlsProps {
   difficulty: Difficulty
   onDifficultyChange: (d: Difficulty) => void
+  coachOn: boolean
+  onCoachToggle: (on: boolean) => void
 }
 
 /**
- * Difficulty selector. Increments 4 and 5 add the Coach and Explain toggles here.
+ * Difficulty selector + the Coach toggle. (Increment 5 adds the Explain toggle here.)
+ * Coach is never auto-enabled — it's an explicit user choice.
  */
-export function Controls({ difficulty, onDifficultyChange }: ControlsProps) {
+export function Controls({ difficulty, onDifficultyChange, coachOn, onCoachToggle }: ControlsProps) {
   return (
     <div className="controls">
       <div className="control-row">
@@ -33,6 +67,13 @@ export function Controls({ difficulty, onDifficultyChange }: ControlsProps) {
           ))}
         </div>
       </div>
+
+      <Toggle
+        label="Coach"
+        hint="Best move + eval, fully offline"
+        checked={coachOn}
+        onChange={onCoachToggle}
+      />
     </div>
   )
 }
