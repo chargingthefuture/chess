@@ -161,6 +161,21 @@ build checks:
   handling, and FEN-keyed cache are unit-tested with a mocked `fetch`.
 - `npm run build` runs `tsc` + the PWA plugin and confirms the WASM is precached.
 
+## Deploy (GitHub Pages)
+
+This repo deploys to a GitHub Pages project site at `https://chargingthefuture.github.io/chess/`,
+which serves from the `/chess/` sub-path (not the domain root). Two things make that work:
+
+- `vite.config.ts` sets `base: '/chess/'`, so every built asset URL (JS, CSS, the engine worker +
+  wasm, the manifest, the service worker) is prefixed with `/chess/`. Without it the page loads
+  blank because the assets 404. If you fork this under a different repo name, change that one
+  constant to `/<your-repo>/`.
+- `.github/workflows/deploy.yml` builds the app and publishes `dist/` on every push to `main`.
+
+One-time setup: in the repo, open **Settings → Pages** and set **Source** to **GitHub Actions**
+(the workflow also tries to enable this automatically). After that, each push to `main` publishes
+the site.
+
 ## License
 
 The bundled Stockfish engine is GPL-3.0 (see `public/engine/`). Application code in this repo
