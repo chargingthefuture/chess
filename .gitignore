@@ -13,3 +13,6 @@ dev-dist
 # NOTE: public/engine/* (the Stockfish lite-single worker + wasm) IS committed on
 # purpose so the repo is self-contained and builds/plays offline without re-fetching
 # the engine. scripts/copy-engine.mjs refreshes those files from node_modules when present.
+
+# Personal, per-developer Claude settings (keep the shared .claude/settings.json tracked)
+.claude/settings.local.json
