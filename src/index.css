@@ -430,3 +430,14 @@ button.btn--primary {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* Game-controller hint */
+.input-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: -4px;
+}

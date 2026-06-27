@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { Arrow } from 'react-chessboard'
-import type { Move } from 'chess.js'
+import type { Move, Square } from 'chess.js'
 import { Board } from './components/Board'
 import { Controls } from './components/Controls'
 import { GameOverDialog } from './components/GameOverDialog'
@@ -13,10 +13,14 @@ import { Coach, computeSwing, sameMove, uciToSan } from './engine/coach'
 import type { CoachAnalysis, SwingResult } from './engine/coach'
 import { explain } from './coaching/explain'
 import { getCachedExplanation, setCachedExplanation } from './coaching/explainCache'
+import { useGamepad } from './hooks/useGamepad'
+import { stepSquare } from './input/boardNav'
+import type { Dir } from './input/boardNav'
 
 const HINT_COLOR = '#2e9b3e'
 const API_KEY_LS = 'chesscoach:apiKey'
 const ENV_KEY = (import.meta.env as Record<string, string | undefined>).VITE_ANTHROPIC_API_KEY ?? ''
+const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard']
 
 /**
  * Owns the three user-controlled settings (difficulty, Coach, Explain) and orchestrates the
@@ -30,6 +34,11 @@ export default function App() {
   const game = useChessGame()
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [thinking, setThinking] = useState(false)
+
+  // --- Cursor / selection input (game controller, keyboard, tap) ---
+  const [cursor, setCursor] = useState('e2')
+  const [selected, setSelected] = useState<string | null>(null)
+  const [keyboardActive, setKeyboardActive] = useState(false)
 
   // --- Opponent (Black) ---
   const opponentRef = useRef<Opponent | null>(null)
@@ -72,10 +81,12 @@ export default function App() {
     }
   }
 
-  // Any explanation belongs to a specific position; drop it whenever the position changes.
+  // The explanation and any in-progress selection belong to a specific position; drop both
+  // whenever the position changes (after your move or the bot's reply).
   useEffect(() => {
     setExplanation(null)
     setExplainError(null)
+    setSelected(null)
   }, [game.fen])
 
   // Create the coach worker lazily the first time it's enabled; keep it for reuse.
@@ -183,12 +194,48 @@ export default function App() {
     )
   }
 
-  const handleMove = (from: string, to: string): boolean => {
+  // Shared move-application path for every input method (drag, tap, controller, keyboard).
+  const applyUserMove = (from: string, to: string): boolean => {
     if (!isUsersTurn) return false
     const move = game.move({ from, to })
     if (!move) return false
+    setSelected(null)
     if (coachOn) void evaluateUserMove(move)
     return true
+  }
+
+  const handleMove = (from: string, to: string): boolean => applyUserMove(from, to)
+
+  // Tap / A-button / Enter on a square: pick up your piece, then move it to a second square.
+  const activateSquare = (square: string) => {
+    if (!isUsersTurn) return
+    const piece = game.game.get(square as Square)
+    if (selected === null) {
+      if (piece && piece.color === 'w') setSelected(square)
+      return
+    }
+    if (square === selected) {
+      setSelected(null) // tapped the selected piece again — deselect
+      return
+    }
+    if (piece && piece.color === 'w') {
+      setSelected(square) // tapped another of your own pieces — switch selection
+      return
+    }
+    applyUserMove(selected, square) // chess.js judges legality; selection clears either way
+    setSelected(null)
+  }
+
+  const handleCursorMove = (dir: Dir) => {
+    setKeyboardActive(true)
+    setCursor((c) => stepSquare(c, dir))
+  }
+
+  const cycleDifficulty = (delta: number) => {
+    setDifficulty((d) => {
+      const i = DIFFICULTIES.indexOf(d)
+      return DIFFICULTIES[Math.min(DIFFICULTIES.length - 1, Math.max(0, i + delta))]
+    })
   }
 
   const handleCoachToggle = (on: boolean) => {
@@ -253,8 +300,67 @@ export default function App() {
     setExplanation(null)
     setExplainError(null)
     setExplaining(false)
+    setSelected(null)
+    setCursor('e2')
     game.reset()
   }
+
+  // Keyboard control: arrows move the cursor, Enter/Space select, Esc cancels. Subscribed once;
+  // a ref keeps it acting on the latest state without re-subscribing on every render.
+  const keyHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {})
+  keyHandlerRef.current = (e: KeyboardEvent) => {
+    // Don't hijack typing in a field (e.g. the API-key input) or browser/OS shortcuts.
+    const target = e.target as HTMLElement | null
+    if (
+      e.metaKey ||
+      e.ctrlKey ||
+      e.altKey ||
+      (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable))
+    ) {
+      return
+    }
+    switch (e.key) {
+      case 'ArrowUp':
+        handleCursorMove('up')
+        break
+      case 'ArrowDown':
+        handleCursorMove('down')
+        break
+      case 'ArrowLeft':
+        handleCursorMove('left')
+        break
+      case 'ArrowRight':
+        handleCursorMove('right')
+        break
+      case 'Enter':
+      case ' ':
+        setKeyboardActive(true)
+        activateSquare(cursor)
+        break
+      case 'Escape':
+        setSelected(null)
+        return
+      default:
+        return
+    }
+    e.preventDefault()
+  }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => keyHandlerRef.current(e)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // Game controller (Gamepad API) — same select-and-move scheme as keyboard and tap.
+  const { connected: controllerConnected } = useGamepad({
+    onMove: handleCursorMove,
+    onConfirm: () => activateSquare(cursor),
+    onCancel: () => setSelected(null),
+    onCoach: () => handleCoachToggle(!coachOn),
+    onNewGame: () => handleNewGame(),
+    onDifficultyDown: () => cycleDifficulty(-1),
+    onDifficultyUp: () => cycleDifficulty(1),
+  })
 
   // Best-move arrow + square highlight (only while it's your turn and the coach has a hint).
   const hintBest = coachOn && isUsersTurn ? (hint?.best ?? null) : null
@@ -269,6 +375,25 @@ export default function App() {
           [toSq]: { boxShadow: `inset 0 0 0 4px ${HINT_COLOR}` },
         }
       : {}
+
+  // Selection + cursor highlights for tap / controller / keyboard, layered over the coach's.
+  const cursorVisible = controllerConnected || keyboardActive
+  const inputSquares: Record<string, CSSProperties> = {}
+  if (selected) {
+    inputSquares[selected] = { background: 'rgba(255, 213, 79, 0.5)' }
+    for (const m of game.game.moves({ square: selected as Square, verbose: true })) {
+      inputSquares[m.to] = m.captured
+        ? { background: 'radial-gradient(circle, transparent 56%, rgba(220, 38, 38, 0.5) 58%)' }
+        : { background: 'radial-gradient(circle, rgba(0, 0, 0, 0.3) 18%, transparent 20%)' }
+    }
+  }
+  if (cursorVisible) {
+    inputSquares[cursor] = {
+      ...(inputSquares[cursor] ?? {}),
+      boxShadow: 'inset 0 0 0 3px rgba(255, 255, 255, 0.95)',
+    }
+  }
+  const squareStyles: Record<string, CSSProperties> = { ...coachSquares, ...inputSquares }
 
   const statusText = game.status.isGameOver
     ? 'Game over'
@@ -297,9 +422,13 @@ export default function App() {
       <Board
         fen={game.fen}
         onMove={handleMove}
+        onSquareActivate={(sq) => {
+          setCursor(sq)
+          activateSquare(sq)
+        }}
         allowDragging={isUsersTurn && !thinking}
         arrows={coachArrows}
-        squareStyles={coachSquares}
+        squareStyles={squareStyles}
       />
 
       <div className="statusbar">
@@ -312,6 +441,12 @@ export default function App() {
         )}
         <button onClick={handleNewGame}>New game</button>
       </div>
+
+      {controllerConnected && (
+        <div className="input-hint">
+          🎮 D-pad move · A select · B cancel · Y coach · LB/RB difficulty · Start new game
+        </div>
+      )}
 
       <CoachPanel
         enabled={coachOn}
