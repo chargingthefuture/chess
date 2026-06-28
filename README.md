@@ -22,6 +22,20 @@ home screen.
   reviewed game becomes an offline study set.
 - Checkmate / stalemate / draw detection → **Play again**.
 
+## Controls
+
+Move a piece any of these ways — all four feed the same select-and-move logic, and
+drag-and-drop keeps working exactly as before:
+
+- **Drag and drop** — drag a piece to its square (mouse or touch).
+- **Tap to move** — tap your piece (legal targets light up), then tap the destination.
+- **Keyboard** — arrow keys move a square cursor, **Enter/Space** select, **Esc** cancels.
+- **Game controller** — pair a Bluetooth controller (works in desktop Chrome/Edge/Firefox,
+  Android Chrome, and iOS/iPadOS Safari 16+). **D-pad / left stick** moves the cursor;
+  **A** select/move · **B** cancel · **Y** toggle Coach · **LB/RB** difficulty · **Start** new game.
+
+Pawn promotion is automatic (queen).
+
 ## Tech stack
 
 - **Vite + React + TypeScript**
