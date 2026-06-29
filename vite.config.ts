@@ -43,11 +43,27 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache the app shell AND the engine (worker JS + wasm) so the whole app
-        // plays fully offline. The lite-single wasm is ~7 MB — far over Workbox's 2 MiB
-        // default — so raise the per-file cap to precache it.
+        // Precache the app shell AND the default engine (worker JS + ~7 MB wasm) so the whole
+        // app plays fully offline. The wasm is far over Workbox's 2 MiB default, so raise the
+        // per-file cap to precache it.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,wasm,webmanifest}'],
+        // Do NOT precache the ~10 MB no-WebAssembly fallback engine for everyone — only the
+        // (rare) browsers that block WebAssembly need it. It is runtime-cached below instead,
+        // so it downloads once, on first use, for those browsers only.
+        globIgnores: ['**/stockfish-18-asm.js'],
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
+        // Cache the fallback engine the first time it's fetched, then serve it offline.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.endsWith('/engine/stockfish-18-asm.js'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'engine-asm-fallback',
+              expiration: { maxEntries: 1 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
         // Single-page app: serve the (base-prefixed) index.html for navigations when offline.
         navigateFallback: `${BASE}index.html`,
       },

@@ -1,8 +1,13 @@
-// Copies the Stockfish "lite-single" worker + wasm from node_modules into public/engine/.
+// Copies the Stockfish engine files from node_modules into public/engine/.
 //
-// Why rename the wasm to "stockfish.wasm": the lite-single worker resolves its binary as
-// `${scriptDirectory}stockfish.wasm` by default (it does NOT derive the name from its own
-// filename), so the wasm must sit next to the worker under that exact name.
+// IMPORTANT — do NOT rename the wasm. The lite-single worker derives its binary's name from
+// its OWN filename: loaded as `<dir>/stockfish-18-lite-single.js`, it fetches
+// `<dir>/stockfish-18-lite-single.wasm`. So the wasm must keep that exact name next to the
+// worker. Renaming it (an earlier version renamed it to "stockfish.wasm") makes the fetch
+// 404 — the engine never starts and the bot never moves.
+//
+// stockfish-18-asm.js is the self-contained pure-JavaScript fallback (no WebAssembly), used
+// when WASM is blocked (e.g. iOS Lockdown Mode). It embeds everything it needs; no extra file.
 //
 // This is tolerant of a missing source: a fresh clone already contains the committed
 // public/engine files, so the build still works offline even if node_modules/stockfish
@@ -18,7 +23,10 @@ const outDir = resolve(root, 'public/engine')
 
 const jobs = [
   ['stockfish-18-lite-single.js', 'stockfish-18-lite-single.js'],
-  ['stockfish-18-lite-single.wasm', 'stockfish.wasm'],
+  // Keep the wasm's original name — the worker fetches it by that name (see header above).
+  ['stockfish-18-lite-single.wasm', 'stockfish-18-lite-single.wasm'],
+  // Pure-JavaScript fallback used when WebAssembly is blocked (e.g. iOS Lockdown Mode).
+  ['stockfish-18-asm.js', 'stockfish-18-asm.js'],
 ]
 
 try {

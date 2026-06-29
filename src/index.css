@@ -441,3 +441,23 @@ button.btn--primary {
   padding: 8px 12px;
   margin-top: -4px;
 }
+
+/* Engine status banner: a quiet info note for the slower no-WebAssembly fallback, and a
+   prominent error when the engine can't start at all (so a failure is visible, not silent). */
+.engine-banner {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.engine-banner--info {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--panel-2);
+}
+.engine-banner--error {
+  background: #3b1515;
+  color: #fecaca;
+  border: 1px solid var(--danger);
+}

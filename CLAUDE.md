@@ -136,10 +136,16 @@ Add the following repo-specific constraints.
 
 - Use the Stockfish **lite-single** WASM build only — single-threaded, about 7 MB, and it needs no
   special cross-origin isolation headers. Do not switch to the large multi-threaded build.
-- The worker loads its binary as `<worker-directory>/stockfish.wasm`, so the WASM is committed under
-  `public/engine/` renamed to `stockfish.wasm`. `scripts/copy-engine.mjs` refreshes it from
-  `node_modules`. Keep both engine files committed so the build and offline play work without a
-  network fetch.
+- The worker derives its binary's name from its **own** filename: loaded as
+  `<worker-directory>/stockfish-18-lite-single.js`, it fetches
+  `<worker-directory>/stockfish-18-lite-single.wasm`. So the WASM must keep that exact name next to
+  the worker — do **not** rename it. (An earlier version renamed it to `stockfish.wasm`; that made
+  the fetch 404, the engine never started, and the bot never moved.) `scripts/copy-engine.mjs`
+  refreshes both files from `node_modules`. Keep them committed so the build and offline play work
+  without a network fetch.
+- A pure-JavaScript fallback engine, `public/engine/stockfish-18-asm.js`, runs where WebAssembly is
+  blocked (for example iOS Lockdown Mode). It is self-contained (no separate binary). Pick the build
+  at runtime in `src/engine/engineUrl.ts` (`isWasmSupported()`); never assume WebAssembly exists.
 - Run **two separate** Stockfish workers — one opponent (skill-limited) and one coach (full
   strength). Never change options on a worker, or start a new search on it, while it is still
   searching — that is misuse and the engine hangs. `src/engine/uciWorker.ts` serializes every command

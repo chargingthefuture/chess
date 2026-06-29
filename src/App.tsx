@@ -9,6 +9,7 @@ import { CoachPanel } from './components/CoachPanel'
 import { useChessGame } from './hooks/useChessGame'
 import { Opponent } from './engine/opponent'
 import type { Difficulty } from './engine/opponent'
+import { isWasmSupported } from './engine/engineUrl'
 import { Coach, computeSwing, sameMove, uciToSan } from './engine/coach'
 import type { CoachAnalysis, SwingResult } from './engine/coach'
 import { explain } from './coaching/explain'
@@ -42,10 +43,20 @@ export default function App() {
 
   // --- Opponent (Black) ---
   const opponentRef = useRef<Opponent | null>(null)
+  // True if the engine can't start at all (so the bot can't move). Surfaced as a banner instead
+  // of a silent hang — which is exactly the failure mode the missing-wasm bug used to produce.
+  const [engineFailed, setEngineFailed] = useState(false)
   useEffect(() => {
     const opponent = new Opponent()
     opponentRef.current = opponent
+    setEngineFailed(false)
+    let active = true
+    // whenReady() rejects if the worker never completes its handshake (blocked/missing engine).
+    opponent.whenReady().catch(() => {
+      if (active) setEngineFailed(true)
+    })
     return () => {
+      active = false
       opponentRef.current = null
       opponent.dispose()
     }
@@ -395,6 +406,9 @@ export default function App() {
   }
   const squareStyles: Record<string, CSSProperties> = { ...coachSquares, ...inputSquares }
 
+  // The slower no-WebAssembly engine is in use when WASM can't compile (e.g. Lockdown Mode).
+  const engineFallback = !isWasmSupported()
+
   const statusText = game.status.isGameOver
     ? 'Game over'
     : thinking
@@ -418,6 +432,17 @@ export default function App() {
         explainOn={explainOn}
         onExplainToggle={handleExplainToggle}
       />
+
+      {(engineFailed || engineFallback) && (
+        <div
+          className={`engine-banner engine-banner--${engineFailed ? 'error' : 'info'}`}
+          role={engineFailed ? 'alert' : undefined}
+        >
+          {engineFailed
+            ? 'The chess engine could not start, so the bot cannot move. Reload the page to try again. On an iPhone or iPad, if Lockdown Mode is on, allow this site (Settings → Privacy & Security → Lockdown Mode), then reload.'
+            : 'Compatibility mode: WebAssembly is turned off in this browser (for example iOS Lockdown Mode), so the bot uses a slower built-in engine. It still plays — moves just take a little longer.'}
+        </div>
+      )}
 
       <Board
         fen={game.fen}
