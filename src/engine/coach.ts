@@ -1,11 +1,9 @@
 import { Chess } from 'chess.js'
 import { UciEngine } from './uciWorker'
+import { engineWorkerUrl, goCommand } from './engineUrl'
 
-// Resolved lazily (in the constructor) rather than at module load, so the pure helpers in
-// this file (parseAnalysis/computeSwing/...) can be imported outside Vite — e.g. in Node tests.
-function stockfishWorkerUrl(): string {
-  return `${import.meta.env.BASE_URL}engine/stockfish-18-lite-single.js`
-}
+// On the slow asm.js fallback (no WebAssembly), bound analysis by time instead of depth.
+const FALLBACK_MOVETIME_MS = 2500
 
 /** Centipassed-pawn value standing in for a forced mate, so mates sort/compare sanely. */
 const MATE_CP = 100000
@@ -141,7 +139,7 @@ export class Coach {
 
   constructor(depth = 15) {
     this.depth = depth
-    this.engine = new UciEngine(stockfishWorkerUrl())
+    this.engine = new UciEngine(engineWorkerUrl())
     this.ready = this.engine
       .init()
       .then(() => this.engine.setOptions(['setoption name MultiPV value 3']))
@@ -150,7 +148,9 @@ export class Coach {
   /** Analyze a position to the configured depth; returns best-first MultiPV lines. */
   async analyze(fen: string): Promise<CoachAnalysis> {
     await this.ready
-    const { info } = await this.engine.search(fen, `go depth ${this.depth}`, { collectInfo: true })
+    const { info } = await this.engine.search(fen, goCommand(this.depth, FALLBACK_MOVETIME_MS), {
+      collectInfo: true,
+    })
     return parseAnalysis(fen, info)
   }
 

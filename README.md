@@ -75,12 +75,15 @@ Key decisions:
 
 ### The Stockfish worker + WASM
 
-The lite-single worker resolves its binary as `${scriptDirectory}/stockfish.wasm` by default
-(it does **not** derive the name from its own filename). So the engine is vendored under
+The lite-single worker derives its binary's name from its **own** filename: loaded as
+`<dir>/stockfish-18-lite-single.js`, it fetches `<dir>/stockfish-18-lite-single.wasm`. So the
+wasm must keep that exact name next to the worker — renaming it makes the fetch return
+"not found", the engine never starts, and the bot never moves. The engine is vendored under
 `public/engine/` as:
 
-- `stockfish-18-lite-single.js` (the worker)
-- `stockfish.wasm` (renamed from `stockfish-18-lite-single.wasm`)
+- `stockfish-18-lite-single.js` (the worker) + `stockfish-18-lite-single.wasm` (its binary)
+- `stockfish-18-asm.js` — a self-contained pure-JavaScript engine (no WebAssembly), used as a
+  fallback when WebAssembly is blocked (for example iOS Lockdown Mode). It needs no extra file.
 
 These files are committed so the repo is self-contained and builds/plays offline.
 `scripts/copy-engine.mjs` (run automatically before `dev`/`build`) refreshes them from
